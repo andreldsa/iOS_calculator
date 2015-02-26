@@ -30,13 +30,15 @@ class ViewController: UIViewController {
     @IBOutlet weak var displayLabel: UILabel!
     // or should it be done in InterfaceBuilder?
     
-    var currentTotal:Int = 0;
-    var oper:String?
+    var calc:Calculator = Calculator()
+    
+    var display:String = "";
+    var currentNumber:String = "";
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        displayLabel.text = "\(currentTotal)"
+        displayLabel.text = display
     }
 
     override func didReceiveMemoryWarning() {
@@ -56,11 +58,20 @@ class ViewController: UIViewController {
         if let digit = (sender as UIButton).titleLabel?.text {
             if(displayLabel.text! != "0"){
                 displayLabel.text! += digit
+                currentNumber += digit
             }
             else{
                 displayLabel.text = digit
+                currentNumber = digit
             }
         }
+    }
+    
+    func addToCalc(oper:String) {
+        calc.addToMemory(currentNumber)
+        calc.addToMemory(oper)
+        currentNumber = ""
+        displayLabel.text! += oper
     }
     
     /*
@@ -71,21 +82,30 @@ class ViewController: UIViewController {
     @IBAction func pressOperator(sender: AnyObject) {
         let o:String! = (sender as UIButton).titleLabel?.text
         
+        if(currentNumber == "") {
+            revert()
+            var display:String! = displayLabel.text
+            if(countElements(display) > 1){
+                display = dropLast(display)
+            }
+            else{
+                display = "0"
+            }            
+            displayLabel.text = "\(display)"
+
+        }
+        
         switch(o){
-            case "+":
-                // add operation
-                oper = "+"
-            case "-":
-                // subtract operation
-                oper = "-"
-            case "x":
-                // multiply operation
-                oper = "x"
-            case "/":
-                // divide operation
-                oper = "/"
+        case "+":
+            addToCalc("+")
+        case "-":
+            addToCalc("-")
+        case "x":
+            addToCalc("*")
+        case "/":
+            addToCalc("/")
         default:
-            oper = nil
+            ""
         }
     }
 
@@ -93,18 +113,26 @@ class ViewController: UIViewController {
         Perform calculation and display result
     */
     @IBAction func equalsOp (sender: AnyObject) {
-        
-        displayLabel.text = "\(currentTotal)"
+        calc.addToMemory(currentNumber)
+        var result = calc.evaluate()
+        currentNumber = result
+        displayLabel.text = "\(result)"
+        calc = Calculator()
     }
     
     /*
         Reset all values
     */
     @IBAction func clearOp (sender: AnyObject) {
-        currentTotal = 0
-        oper = nil
+        currentNumber = ""
+        calc = Calculator()
         
-        displayLabel.text = "\(currentTotal)"
+        displayLabel.text = display
+    }
+    
+    func revert() {
+        calc.removeLast()
+        currentNumber = calc.removeLast()!
     }
     
     /*
@@ -116,6 +144,11 @@ class ViewController: UIViewController {
         
         if(countElements(display) > 1){
             display = dropLast(display)
+            if(currentNumber != "") {
+                currentNumber = dropLast(currentNumber)
+            } else {
+                revert()
+            }
         }
         else{
             display = "0"
